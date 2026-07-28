@@ -2018,6 +2018,10 @@ body.validation-popin-open{overflow:hidden;}
   stroke-linejoin:round;
 }
 
+
+input.invalid-url{border-color:#d93025!important;box-shadow:0 0 0 3px rgba(217,48,37,.12)}
+.url-error{color:#d93025;font-size:12px;margin-top:4px;display:none}
+.url-error.show{display:block}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
@@ -2038,7 +2042,7 @@ body.validation-popin-open{overflow:hidden;}
     <h3>Prüfdaten (Pflichtfelder)</h3>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
       <label>Unternehmen<br><input id="company" type="text" style="width:100%;padding:10px;border:1px solid #dfe4ec;border-radius:8px;"></label>
-      <label>Website<br><input id="website" type="text" style="width:100%;padding:10px;border:1px solid #dfe4ec;border-radius:8px;"></label>
+      <label>Website<br><input id="website" type="text" style="width:100%;padding:10px;border:1px solid #dfe4ec;border-radius:8px;"><div id="websiteError" class="url-error">Bitte gib eine gültige Website mit Domainendung an (z.&nbsp;B. https://example.de oder example.de).</div></label>
       <label>Prüfer<br><input id="auditor" type="text" style="width:100%;padding:10px;border:1px solid #dfe4ec;border-radius:8px;"></label>
       <label>Prüfdatum<br><input id="auditdate" type="date" style="width:100%;padding:10px;border:1px solid #dfe4ec;border-radius:8px;"></label>
     </div>
@@ -2691,10 +2695,27 @@ function resetAudit() {
   });
 
   saveState();
-  updatePdfButtonState();
+  validateWebsiteField();
+updatePdfButtonState();
   render();
 }
 
+
+
+function isValidWebsite(value){
+ const v=value.trim();
+ return /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/i.test(v);
+}
+function validateWebsiteField(){
+ const i=document.getElementById('website');
+ const e=document.getElementById('websiteError');
+ if(!i||!e) return true;
+ const ok=isValidWebsite(i.value);
+ const show=i.value.trim()!==''&&!ok;
+ i.classList.toggle('invalid-url',show);
+ e.classList.toggle('show',show);
+ return ok;
+}
 
 loadState();
 saveState();
@@ -2710,6 +2731,8 @@ setupToolAccess();
 
 document.getElementById("search").addEventListener("input", render);
 document.getElementById("sectionFilter").addEventListener("change", render);
+const wf=document.getElementById('website');
+if(wf){wf.addEventListener('input',()=>{validateWebsiteField();});wf.addEventListener('blur',validateWebsiteField);}
 document.getElementById("resetAuditBtn").addEventListener("click", resetAudit);
 document.getElementById("saveProgressBtn").addEventListener("click", saveManualProgress);
 document.getElementById("loadProgressBtn").addEventListener("click", loadManualProgress);
