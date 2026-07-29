@@ -1922,6 +1922,146 @@ button[data-action="print"] .pdf-icon{
 body.validation-popin-open{overflow:hidden;}
 
 
+/* Prompt generation pop-in */
+.prompt-popin{
+  position:fixed;
+  inset:0;
+  z-index:4100;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.prompt-popin[hidden]{display:none !important;}
+.prompt-popin-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(11,35,71,.72);
+  backdrop-filter:blur(4px);
+}
+.prompt-popin-dialog{
+  position:relative;
+  width:min(900px,100%);
+  max-height:min(88vh,900px);
+  display:flex;
+  flex-direction:column;
+  padding:26px;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 26px 70px rgba(0,0,0,.3);
+}
+.prompt-popin-dialog h3{
+  margin:0 44px 7px 0;
+  color:var(--header-blue);
+  font-size:22px;
+}
+.prompt-popin-dialog > p{
+  margin:0 0 16px;
+  color:#475467;
+  line-height:1.5;
+}
+.prompt-popin-close{
+  position:absolute;
+  top:14px;
+  right:14px;
+  width:36px;
+  height:36px;
+  border:0;
+  border-radius:50%;
+  background:#eef2f7;
+  color:#111827;
+  font-size:24px;
+  font-family:Arial,sans-serif;
+  font-weight:400;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 0 2px;
+  cursor:pointer;
+  z-index:3;
+}
+.prompt-popin-close:hover{
+  background:#e2e8f0;
+}
+.prompt-popin-close:focus-visible{
+  outline:3px solid rgba(22,58,112,.22);
+  outline-offset:2px;
+}
+.prompt-output{
+  width:100%;
+  min-height:360px;
+  flex:1 1 auto;
+  resize:vertical;
+  padding:15px;
+  border:1px solid #cfd8e6;
+  border-radius:11px;
+  background:#f8fafc;
+  color:#172b4d;
+  font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+}
+.prompt-output:focus{
+  outline:none;
+  border-color:var(--header-blue);
+  box-shadow:0 0 0 3px rgba(22,58,112,.12);
+}
+.prompt-popin-actions{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:12px;
+  margin-top:15px;
+}
+.prompt-copy-status{
+  min-height:20px;
+  margin-right:auto;
+  color:#18794e;
+  font-size:13px;
+  font-weight:700;
+}
+.prompt-copy-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:11px 16px;
+  border:0;
+  border-radius:9px;
+  background:var(--header-blue);
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+}
+.prompt-copy-button svg{
+  width:18px;
+  height:18px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+body.prompt-popin-open{overflow:hidden;}
+#promptBtn:disabled{
+  opacity:.48;
+  cursor:not-allowed;
+  filter:grayscale(.2);
+  box-shadow:none !important;
+}
+.prompt-icon{
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.45;
+  stroke-linejoin:round;
+}
+@media(max-width:700px){
+  .prompt-popin-dialog{padding:21px;}
+  .prompt-output{min-height:300px;}
+  .prompt-popin-actions{align-items:stretch;flex-direction:column;}
+  .prompt-copy-status{margin-right:0;}
+  .prompt-copy-button{width:100%;}
+}
+
 /* PDF button activation */
 #printBtn:disabled{
   opacity:.48;
@@ -2137,6 +2277,14 @@ input.invalid-url{border-color:#d93025!important;box-shadow:0 0 0 3px rgba(217,4
         <path d="M12 3v12m0 0-4-4m4 4 4-4M5 17v4h14v-4"/>
       </svg>
       <span>Fortschritt laden</span>
+    </button>
+      <button id="promptBtn" class="primary print-action" type="button" disabled aria-disabled="true" title="Prompt für eine KI-gestützte Optimierungsanalyse erstellen">
+      <svg class="button-icon prompt-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2.75l1.35 4.05L17.4 8.15l-4.05 1.35L12 13.55 10.65 9.5 6.6 8.15l4.05-1.35L12 2.75z"/>
+        <path d="M18.25 13.25l.85 2.55 2.55.85-2.55.85-.85 2.55-.85-2.55-2.55-.85 2.55-.85.85-2.55z"/>
+        <path d="M6.25 14.25l.75 2.25 2.25.75-2.25.75-.75 2.25-.75-2.25-2.25-.75 2.25-.75.75-2.25z"/>
+      </svg>
+      <span>Prompt erstellen</span>
     </button>
       <button id="printBtn" class="primary print-action" type="button" disabled aria-disabled="true">
       <svg class="button-icon pdf-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -2608,6 +2756,7 @@ function updateMetrics() {
   const stickyProgressBar = document.getElementById("stickyProgressBar");
   if (stickyDoneCount) stickyDoneCount.textContent = `${completed.length} / ${activeChecks.length}`;
   if (stickyProgressBar) stickyProgressBar.style.width = progress + "%";
+  updatePromptButtonState();
 }
 
 
@@ -3275,15 +3424,52 @@ function companyDataComplete() {
   });
 }
 
-function updatePdfButtonState() {
-  const button = document.getElementById("printBtn");
+function hasOptimizationNeed() {
+  const assessed = includedChecks().filter(check =>
+    ["green", "yellow", "red"].includes(state[check.id]?.status)
+  );
+  if (!assessed.length) return false;
+  const points = assessed.reduce(
+    (sum, check) => sum + STATUS_POINTS[state[check.id].status],
+    0
+  );
+  const score = Math.round(points / (assessed.length * 2) * 100);
+  return assessed.some(check => ["yellow", "red"].includes(state[check.id]?.status)) || score < 100;
+}
+
+function updatePromptButtonState() {
+  const button = document.getElementById("promptBtn");
   if (!button) return;
-  const enabled = companyDataComplete();
+
+  const companyReady = companyDataComplete() && isValidWebsite(
+    document.getElementById("website")?.value || ""
+  );
+  const optimizationReady = hasOptimizationNeed();
+  const enabled = companyReady && optimizationReady;
+
   button.disabled = !enabled;
   button.setAttribute("aria-disabled", enabled ? "false" : "true");
-  button.title = enabled
-    ? "Audit als PDF generieren"
-    : "Bitte zuerst alle Unternehmensdaten ausfüllen";
+
+  if (!companyReady) {
+    button.title = "Bitte zuerst alle Unternehmensdaten einschließlich einer gültigen Website ausfüllen";
+  } else if (!optimizationReady) {
+    button.title = "Mindestens eine Prüfung mit Optimierungsbedarf muss bewertet sein";
+  } else {
+    button.title = "KI-Prompt für Optimierungsideen erstellen";
+  }
+}
+
+function updatePdfButtonState() {
+  const button = document.getElementById("printBtn");
+  if (button) {
+    const enabled = companyDataComplete();
+    button.disabled = !enabled;
+    button.setAttribute("aria-disabled", enabled ? "false" : "true");
+    button.title = enabled
+      ? "Audit als PDF generieren"
+      : "Bitte zuerst alle Unternehmensdaten ausfüllen";
+  }
+  updatePromptButtonState();
 }
 
 
@@ -3361,6 +3547,252 @@ document.addEventListener("keydown", event => {
   if (event.key === "Escape" && validationPopin && !validationPopin.hidden) {
     closeCompanyValidationPopin();
     firstMissingCompanyField?.focus();
+  }
+});
+
+
+
+const PROMPT_STATUS_LABELS = {
+  green: "Erfüllt",
+  yellow: "Teilweise / optimierbar",
+  red: "Kritisch / nicht erfüllt",
+  gray: "Nicht relevant"
+};
+
+function promptClean(value) {
+  return String(value ?? "").trim();
+}
+
+function calculatePromptScore(assessedChecks) {
+  if (!assessedChecks.length) return null;
+  const points = assessedChecks.reduce(
+    (sum, check) => sum + STATUS_POINTS[state[check.id]?.status],
+    0
+  );
+  return Math.round(points / (assessedChecks.length * 2) * 100);
+}
+
+function buildOptimizationPrompt() {
+  const company = promptClean(document.getElementById("company")?.value);
+  const website = promptClean(document.getElementById("website")?.value);
+  const auditor = promptClean(document.getElementById("auditor")?.value);
+  const auditDate = promptClean(document.getElementById("auditdate")?.value);
+
+  const activeChecks = includedChecks();
+  const completedChecks = activeChecks.filter(check =>
+    ["green", "yellow", "red"].includes(state[check.id]?.status)
+  );
+  const score = calculatePromptScore(completedChecks);
+  const optimizationChecks = completedChecks.filter(check =>
+    ["yellow", "red"].includes(state[check.id]?.status)
+  );
+
+  const grouped = [...new Set(completedChecks.map(check => check.section))]
+    .map(section => {
+      const rows = completedChecks.filter(check => check.section === section);
+      const details = rows.map((check, index) => {
+        const current = state[check.id] || {};
+        const parts = [
+          `${index + 1}. Prüfung: ${promptClean(check.title)}`,
+          `   Ampel-Status: ${PROMPT_STATUS_LABELS[current.status] || current.status}`,
+          `   Relevante Tools/Prüfgrundlage: ${promptClean(check.tools) || "nicht angegeben"}`
+        ];
+        if (promptClean(current.value)) {
+          parts.push(`   Eingetragener Wert: ${promptClean(current.value)}`);
+        }
+        if (promptClean(current.comparison)) {
+          parts.push(`   Vergleich/Ziel: ${promptClean(current.comparison)}`);
+        }
+        parts.push(`   Notizen: ${promptClean(current.note) || "Keine Notiz hinterlegt"}`);
+        return parts.join("\n");
+      }).join("\n\n");
+      return `### ${section}\n${details}`;
+    })
+    .join("\n\n");
+
+  return `Du bist ein erfahrener Senior-Berater für digitale Unternehmensauftritte, UX, Webtechnik, SEO, GEO, Tracking, Performance Marketing, Social Media und Conversion-Optimierung.
+
+Analysiere den folgenden Unternehmensauftritt anhand der Website und der dokumentierten Audit-Ergebnisse. Nutze eine aktuelle KI-gestützte Websuche, rufe die Website einschließlich relevanter Unterseiten auf und recherchiere die Wettbewerbssituation. Berücksichtige dabei nur belastbare, aktuelle Quellen. Erfinde keine Tatsachen. Weise transparent darauf hin, wenn eine Website, Unterseite, Kennzahl oder Wettbewerbsinformation nicht geprüft werden kann.
+
+## Unternehmensdaten
+- Unternehmen: ${company}
+- Website: ${website}
+- Prüfer: ${auditor}
+- Prüfdatum: ${auditDate}
+- Gesamtscore der bewerteten, relevanten Prüfungen: ${score === null ? "nicht berechenbar" : score + " %"}
+- Bewertete Prüfungen: ${completedChecks.length} von ${activeChecks.length} aktuell möglichen Prüfungen
+- Prüfungen mit dokumentiertem Optimierungsbedarf: ${optimizationChecks.length}
+
+## Auftrag
+1. Untersuche zunächst die Website ${website} und leite aus Inhalt, Leistungen, Zielgruppenansprache, Positionierung, Conversion-Pfaden, Technik und sichtbarer Markenkommunikation ein belastbares Unternehmensprofil ab.
+2. Identifiziere die wichtigsten direkten und indirekten Wettbewerber. Begründe die Auswahl anhand von Leistungsangebot, Zielgruppe, Region beziehungsweise Markt und Suchintention. Vergleiche insbesondere Positionierung, Nutzenversprechen, Website-Erlebnis, organische Sichtbarkeit, Content, Vertrauenssignale, Conversion-Elemente und erkennbare Werbeaktivitäten.
+3. Berücksichtige den Gesamtscore und jede unten aufgeführte ausgefüllte Prüfung einzeln. Die Notizen sind als konkrete Beobachtungen des Auditors zu behandeln und dürfen nicht ignoriert oder pauschal überschrieben werden.
+4. Prüfe bei grünen Bewertungen, ob der positive Status anhand der Website plausibel ist, und nenne nur sinnvolle Absicherungs- oder Weiterentwicklungsmöglichkeiten.
+5. Entwickle bei gelben und roten Bewertungen konkrete, priorisierte Optimierungsideen. Verknüpfe jede Empfehlung sichtbar mit Website-Beobachtungen, Ampel-Status, Notizen, Kennzahlen und relevanten Wettbewerbserkenntnissen.
+6. Trenne eindeutig zwischen belegbaren Feststellungen, plausiblen Hypothesen und Empfehlungen.
+7. Verwende keine pauschalen Standardtipps. Jede Maßnahme muss auf das Unternehmen, die Website und die jeweilige Prüfung zugeschnitten sein.
+8. Nenne für externe Fakten und Wettbewerbsbeobachtungen nachvollziehbare Quellen mit URL und Abrufdatum.
+
+## Audit-Ergebnisse
+${grouped || "Keine bewerteten Prüfungen vorhanden."}
+
+## Gewünschte Ausgabe
+Erstelle die Antwort in dieser Struktur:
+
+### 1. Management Summary
+- Kurzbewertung des digitalen Unternehmensauftritts
+- wichtigste Stärken
+- drei bis fünf größte Optimierungshebel
+- Einordnung des Gesamtscores
+
+### 2. Website- und Marktverständnis
+- Geschäftsmodell, Angebote, Zielgruppen und mutmaßliche Hauptziele der Website
+- Positionierung und Nutzenversprechen
+- erkennbare Conversion-Ziele
+- offene Punkte oder Unsicherheiten
+
+### 3. Wettbewerbssituation
+Erstelle eine übersichtliche Wettbewerber-Matrix mit:
+- Wettbewerber und Website
+- Begründung der Relevanz
+- sichtbare Stärken
+- sichtbare Schwächen
+- Differenzierungschance für ${company}
+Fasse anschließend die wichtigsten Benchmarks und Marktlücken zusammen.
+
+### 4. Detailanalyse je ausgefüllter Prüfung
+Bilde für jede einzelne oben aufgeführte Prüfung einen eigenen Unterabschnitt mit:
+- Prüfbereich und Prüfung
+- Ampel-Status
+- relevante Audit-Notiz und gegebenenfalls Kennzahl
+- Befund auf der Website
+- Vergleich zum Wettbewerb
+- konkrete Optimierungsideen
+- Priorität: kritisch, hoch, mittel oder niedrig
+- erwarteter Nutzen
+- empfohlener nächster Schritt
+- messbares Erfolgskriterium beziehungsweise KPI
+- Aufwandsschätzung: gering, mittel oder hoch
+
+### 5. Priorisierter Maßnahmenplan
+Erstelle eine Tabelle mit:
+- Rang
+- Maßnahme
+- zugehörige Prüfung
+- Begründung
+- Wirkung
+- Aufwand
+- vorgeschlagener Zeitraum
+- KPI zur Erfolgskontrolle
+
+### 6. Quick Wins
+Nenne Maßnahmen, die voraussichtlich innerhalb von 30 Tagen mit überschaubarem Aufwand umgesetzt werden können.
+
+### 7. Strategische Empfehlungen
+Nenne mittel- und langfristige Maßnahmen, die Positionierung, Sichtbarkeit, Nachfragegenerierung und Conversion nachhaltig verbessern.
+
+### 8. Quellen und Prüfgrenzen
+- verwendete Quellen
+- nicht zugängliche Informationen
+- Annahmen und Unsicherheiten
+
+Antworte auf Deutsch, klar, konkret und umsetzungsorientiert.`;
+}
+
+function openPromptPopin() {
+  if (!companyDataComplete() || !isValidWebsite(document.getElementById("website")?.value || "")) {
+    validateCompanyData();
+    validateWebsiteField();
+    return;
+  }
+  if (!hasOptimizationNeed()) return;
+
+  const popin = document.getElementById("promptPopin");
+  const output = document.getElementById("generatedPrompt");
+  const copyStatus = document.getElementById("promptCopyStatus");
+  output.value = buildOptimizationPrompt();
+  copyStatus.textContent = "";
+  popin.hidden = false;
+  popin.setAttribute("aria-hidden", "false");
+  document.body.classList.add("prompt-popin-open");
+  requestAnimationFrame(() => output.focus());
+}
+
+function closePromptPopin() {
+  const popin = document.getElementById("promptPopin");
+  if (!popin) return;
+  popin.hidden = true;
+  popin.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("prompt-popin-open");
+  document.getElementById("promptBtn")?.focus();
+}
+
+async function copyGeneratedPrompt() {
+  const output = document.getElementById("generatedPrompt");
+  const status = document.getElementById("promptCopyStatus");
+  if (!output || !status) return;
+
+  const promptText = output.value;
+  status.textContent = "";
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(promptText);
+    } else {
+      const temporaryTextarea = document.createElement("textarea");
+      temporaryTextarea.value = promptText;
+      temporaryTextarea.setAttribute("readonly", "");
+      temporaryTextarea.style.position = "fixed";
+      temporaryTextarea.style.left = "-9999px";
+      temporaryTextarea.style.top = "0";
+      temporaryTextarea.style.opacity = "0";
+      document.body.appendChild(temporaryTextarea);
+      temporaryTextarea.focus();
+      temporaryTextarea.select();
+      temporaryTextarea.setSelectionRange(0, temporaryTextarea.value.length);
+
+      const copied = document.execCommand("copy");
+      temporaryTextarea.remove();
+
+      if (!copied) {
+        throw new Error("Der Browser hat den Kopiervorgang abgelehnt.");
+      }
+    }
+
+    status.textContent = "Prompt wurde in die Zwischenablage kopiert.";
+  } catch (error) {
+    console.error(error);
+    output.focus();
+    output.select();
+    output.setSelectionRange(0, output.value.length);
+    status.textContent = "Der Prompt wurde markiert. Bitte kopiere ihn mit Strg+C bzw. Cmd+C.";
+  }
+}
+
+/* Ereignisdelegation, da das Prompt-Pop-in hinter dem Hauptskript im HTML steht. */
+document.addEventListener("click", event => {
+  const promptButton = event.target.closest("#promptBtn");
+  if (promptButton) {
+    openPromptPopin();
+    return;
+  }
+
+  const copyButton = event.target.closest("#copyPromptBtn");
+  if (copyButton) {
+    copyGeneratedPrompt();
+    return;
+  }
+
+  const closeControl = event.target.closest("[data-close-prompt]");
+  if (closeControl) {
+    closePromptPopin();
+  }
+});
+
+document.addEventListener("keydown", event => {
+  const popin = document.getElementById("promptPopin");
+  if (event.key === "Escape" && popin && !popin.hidden) {
+    closePromptPopin();
   }
 });
 
@@ -3563,6 +3995,26 @@ render();
     <p id="companyValidationText">Bitte fülle vor der PDF-Erstellung alle Pflichtfelder der Unternehmensdaten aus:</p>
     <ul class="validation-popin-list" id="companyValidationList"></ul>
     <button type="button" class="validation-popin-action" id="companyValidationAction">Fehlende Angaben ergänzen</button>
+  </div>
+</div>
+
+<div class="prompt-popin" id="promptPopin" hidden aria-hidden="true">
+  <div class="prompt-popin-backdrop" data-close-prompt></div>
+  <div class="prompt-popin-dialog" role="dialog" aria-modal="true" aria-labelledby="promptPopinTitle" aria-describedby="promptPopinText">
+    <button type="button" class="prompt-popin-close" data-close-prompt aria-label="Prompt schließen">×</button>
+    <h3 id="promptPopinTitle">KI-Prompt für Optimierungsideen</h3>
+    <p id="promptPopinText">Der Prompt bündelt Website, Audit-Score, Ampelbewertungen, Kennzahlen und Notizen sowie die gewünschte Wettbewerbsanalyse.</p>
+    <textarea class="prompt-output" id="generatedPrompt" readonly spellcheck="false" aria-label="Generierter KI-Prompt"></textarea>
+    <div class="prompt-popin-actions">
+      <span class="prompt-copy-status" id="promptCopyStatus" role="status" aria-live="polite"></span>
+      <button type="button" class="prompt-copy-button" id="copyPromptBtn">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="8" y="8" width="11" height="12" rx="2"></rect>
+          <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2"></path>
+        </svg>
+        <span>Prompt kopieren</span>
+      </button>
+    </div>
   </div>
 </div>
 
