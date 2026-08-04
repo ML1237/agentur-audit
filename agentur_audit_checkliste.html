@@ -3624,6 +3624,129 @@ main{
  content:none !important;
 }
 
+
+/* === ChatGPT Anpassungen === */
+.kpi-group-title{
+  color:#163A70 !important;
+  background:#eef4ff !important;
+  border-left:4px solid var(--accent);
+  border-radius:0 !important;
+  margin:0 -14px 12px !important;
+}
+.kpi-group-title::before,
+.kpi-group-title::after{
+  display:none !important;
+}
+
+/* Checkbox je KPI-Bereich */
+.kpi-group-title{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.kpi-group-title .kpi-include{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:13px;
+  font-weight:600;
+  color:#344054;
+}
+.kpi-group-title .kpi-include input{
+  width:18px;
+  height:18px;
+}
+
+/* Linke Border bündig */
+.kpi-group{
+  overflow:visible !important;
+  border-radius:0 !important;
+}
+
+
+/* Desktop: vorhandene Bereich-einbeziehen Checkbox rechtsbündig vor dem Status anzeigen */
+@media (min-width:901px){
+  .section-head{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto auto!important;
+    align-items:center!important;
+    gap:20px!important;
+  }
+
+  .section-title-group{
+    justify-self:start!important;
+    min-width:0!important;
+  }
+
+  .section-actions{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    justify-self:end!important;
+    width:auto!important;
+    margin:0!important;
+    padding-left:0!important;
+  }
+
+  .section-actions .section-include,
+  .section-include{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:8px!important;
+    width:auto!important;
+    margin:0!important;
+    white-space:nowrap!important;
+    text-align:right!important;
+  }
+
+  .section-include input{
+    flex:0 0 auto!important;
+    margin:0!important;
+  }
+
+  .section-score{
+    justify-self:end!important;
+    text-align:right!important;
+    white-space:nowrap!important;
+    max-width:210px!important;
+  }
+}
+
+
+/* Desktop: Bereich einbeziehen rechts mit Abstand */
+@media (min-width:901px){
+  .section-head{
+    display:grid!important;
+    grid-template-columns:auto 1fr auto!important;
+    align-items:center;
+    gap:20px;
+  }
+  .section-title-group{justify-self:start;}
+  .section-actions{
+    display:flex!important;
+    justify-content:flex-end!important;
+    align-items:center;
+    width:100%;
+    margin-left:auto;
+  }
+  .section-include{
+    display:flex!important;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
+    margin:0 15px 0 0!important;
+    white-space:nowrap;
+    text-align:right;
+  }
+  .section-score{
+    justify-self:end;
+    text-align:right;
+    white-space:nowrap;
+  }
+}
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
@@ -3973,7 +4096,7 @@ function render() {
     const collapsed = Boolean(state.__collapsed[section]);
     const scoreLabel = included
       ? (pct === null ? "noch nicht bewertet" : pct + " % Bereichsscore")
-      : "nicht im Gesamtscore berücksichtigt";
+      : "nicht berücksichtigt";
 
     const wrap = document.createElement("section");
     wrap.className = `section${collapsed ? " collapsed" : ""}${included ? "" : " excluded"}`;
